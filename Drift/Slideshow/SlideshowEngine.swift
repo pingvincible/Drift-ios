@@ -22,10 +22,16 @@ final class SlideshowEngine {
 
     private let source: SlideSource
     private var loop: Task<Void, Never>?
+    /// The frame being fetched while the current one is on screen.
+    private var prefetch: Task<SlideContent?, Never>?
     private var sequence = 0
     /// Transition the next frame will enter with. Picked one swap ahead so the
-    /// leaving frame and the arriving one always use the same one.
-    private var upcomingTransition: SlideTransition = .random()
+    /// leaving frame and the arriving one always use the same one. The very
+    /// first frame always fades up from black.
+    private var upcomingTransition: SlideTransition = .crossFade
+
+    /// How long to wait before asking again when no source had anything.
+    private static let emptyRetryDelay: TimeInterval = 2
 
     init(source: SlideSource) {
         self.source = source
@@ -43,23 +49,38 @@ final class SlideshowEngine {
     func stop() {
         loop?.cancel()
         loop = nil
+        prefetch?.cancel()
+        prefetch = nil
     }
 
     private func run() async {
-        var isFirstFrame = true
         while !Task.isCancelled {
-            guard let content = await source.nextContent(target: target) else {
-                // Nothing to show yet. Back off instead of spinning.
-                guard await sleep(for: 2) else { return }
+            // Either the frame that was fetched while the previous one was on
+            // screen, or — for the very first frame — a fresh fetch.
+            let pending = prefetch ?? makePrefetch()
+            prefetch = nil
+
+            guard let content = await pending.value else {
+                // Nothing anywhere yet. Back off instead of spinning.
+                guard await sleep(for: Self.emptyRetryDelay) else { return }
                 continue
             }
             guard !Task.isCancelled else { return }
 
-            show(content, animated: !isFirstFrame)
-            isFirstFrame = false
+            show(content)
+
+            // Start on the next frame immediately: by the time the timer fires
+            // the picture is decoded and ready, so no loading is ever on screen.
+            prefetch = makePrefetch()
 
             guard await sleep(for: slideDuration) else { return }
         }
+    }
+
+    private func makePrefetch() -> Task<SlideContent?, Never> {
+        let target = self.target
+        let source = self.source
+        return Task { await source.nextContent(target: target) }
     }
 
     /// Returns `false` when the loop was cancelled while waiting.
@@ -72,7 +93,7 @@ final class SlideshowEngine {
         }
     }
 
-    private func show(_ content: SlideContent, animated: Bool) {
+    private func show(_ content: SlideContent) {
         sequence += 1
         let enter = upcomingTransition
         let exit = SlideTransition.random()
@@ -88,10 +109,6 @@ final class SlideshowEngine {
             exit: exit
         )
 
-        guard animated else {
-            current = slide
-            return
-        }
         withAnimation(enter.animation(base: transitionDuration)) {
             current = slide
         }
