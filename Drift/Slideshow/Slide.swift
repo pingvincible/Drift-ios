@@ -40,6 +40,10 @@ struct SlideTarget: Equatable {
 
     /// Portrait fallback used before the first layout pass.
     static let unknown = SlideTarget()
+
+    /// Orientation tag. Pictures are cropped by Unsplash to the aspect of the
+    /// screen, so the two orientations are cached as separate files.
+    var variant: String { size.width > size.height ? "l" : "p" }
 }
 
 /// Anything that can produce the next picture for the slideshow.
