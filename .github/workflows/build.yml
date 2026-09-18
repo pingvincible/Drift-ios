@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+# A newer push to the same branch makes the running build pointless.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Сборка под симулятор
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Выбрать Xcode
+        run: |
+          # The project uses synchronized file groups (objectVersion 77),
+          # so it needs Xcode 16 or newer. Pick the newest one on the runner.
+          xcode=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Выбран $xcode"
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+
+      - name: Проверить, что проект читается
+        run: xcodebuild -list -project Drift.xcodeproj
+
+      - name: Собрать
+        # No signing and no Unsplash key: Config/Secrets.xcconfig is included
+        # with `#include?`, so its absence leaves the key empty instead of
+        # failing the build. This step only has to prove the code compiles.
+        run: |
+          xcodebuild build \
+            -project Drift.xcodeproj \
+            -scheme Drift \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet
