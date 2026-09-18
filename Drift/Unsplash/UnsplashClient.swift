@@ -113,7 +113,7 @@ actor UnsplashClient {
 
     /// Sizing parameters are appended to the `raw` URL, which is what Unsplash
     /// documents for dynamically resized images.
-    nonisolated static func imageURL(for photo: UnsplashPhoto, targetSize: CGSize, scale: CGFloat) -> URL {
+    static func imageURL(for photo: UnsplashPhoto, targetSize: CGSize, scale: CGFloat) -> URL {
         let pixels = pixelSize(targetSize: targetSize, scale: scale)
         guard var components = URLComponents(url: photo.urls.raw, resolvingAgainstBaseURL: false) else {
             return photo.urls.regular
@@ -134,7 +134,7 @@ actor UnsplashClient {
     }
 
     /// Screen points -> pixels to ask Unsplash for, with zoom headroom and a cap.
-    nonisolated static func pixelSize(targetSize: CGSize, scale: CGFloat) -> CGSize {
+    static func pixelSize(targetSize: CGSize, scale: CGFloat) -> CGSize {
         let fallback = CGSize(width: 1170, height: 2532)
         var size = targetSize.width > 0 && targetSize.height > 0 ? targetSize : fallback
         size = CGSize(

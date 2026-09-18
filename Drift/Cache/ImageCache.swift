@@ -48,13 +48,9 @@ actor ImageCache {
 
     func data(for key: Key) -> Data? {
         let url = imageURL(for: key)
-        guard let data = try? Data(contentsOf: url, options: .mappedIfSafe) else { return nil }
+        guard let data = try? Data(contentsOf: url) else { return nil }
         touch(url)
         return data
-    }
-
-    func contains(_ key: Key) -> Bool {
-        fileManager.fileExists(atPath: imageURL(for: key).path)
     }
 
     func attribution(for key: Key) -> PhotoAttribution? {
@@ -66,6 +62,17 @@ actor ImageCache {
     func entries(themeID: String) -> [Entry] {
         entries(in: themeDirectory(themeID), themeID: themeID)
             .sorted { $0.lastUsed > $1.lastUsed }
+    }
+
+    /// Credits of everything cached for a theme, most recently shown first.
+    func attributions(themeID: String) -> [PhotoAttribution] {
+        var seen = Set<String>()
+        return entries(themeID: themeID).compactMap { entry in
+            guard let credit = attribution(for: entry.key),
+                  seen.insert(credit.photoID).inserted
+            else { return nil }
+            return credit
+        }
     }
 
     func stats(themeID: String? = nil) -> Stats {

@@ -29,6 +29,9 @@ struct RootView: View {
         .persistentSystemOverlays(isPlaying ? .hidden : .automatic)
         .onChange(of: scenePhase, initial: true) { _, _ in updateIdleTimer() }
         .onChange(of: isPlaying) { _, _ in updateIdleTimer() }
+        .onChange(of: settings.cacheLimitMB, initial: true) { _, limit in
+            AppServices.shared.applyCacheLimit(megabytes: limit)
+        }
     }
 
     /// Auto-lock is off only while the slideshow is actually on screen.

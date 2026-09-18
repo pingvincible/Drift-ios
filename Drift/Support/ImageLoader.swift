@@ -11,7 +11,7 @@ enum ImageLoader {
     }
 
     static func decode(fileURL: URL) async -> UIImage? {
-        guard let data = try? Data(contentsOf: fileURL, options: .mappedIfSafe) else { return nil }
+        guard let data = try? Data(contentsOf: fileURL) else { return nil }
         return await decode(data: data)
     }
 }

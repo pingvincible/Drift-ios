@@ -14,6 +14,11 @@ final class AppServices {
         client = UnsplashClient(accessKey: AppSecrets.unsplashAccessKey)
     }
 
+    /// Pushes the user's disk budget down to the cache, trimming it if needed.
+    func applyCacheLimit(megabytes: Int) {
+        Task { await cache.setLimit(bytes: megabytes * 1024 * 1024) }
+    }
+
     /// The chain the slideshow pulls frames from: network first, then the disk
     /// cache, then the pictures shipped with the app.
     func makeSource(for theme: Theme) -> SlideSource {

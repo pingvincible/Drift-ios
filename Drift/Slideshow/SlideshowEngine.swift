@@ -10,15 +10,12 @@ final class SlideshowEngine {
     private(set) var current: Slide?
 
     /// How long a single frame stays on screen, in seconds.
-    var slideDuration: TimeInterval = SlideshowEngine.defaultSlideDuration
+    var slideDuration: TimeInterval = SlideshowDefaults.slideDuration
     /// Base length of a swap, in seconds. Each transition scales it a little
     /// and clamps the result to 1...2 s.
-    var transitionDuration: TimeInterval = SlideshowEngine.defaultTransitionDuration
+    var transitionDuration: TimeInterval = SlideshowDefaults.transitionDuration
     /// Where the frames are drawn; sources use it to pick a resolution.
     var target: SlideTarget = .unknown
-
-    static let defaultSlideDuration: TimeInterval = 18
-    static let defaultTransitionDuration: TimeInterval = 1.5
 
     private let source: SlideSource
     private var loop: Task<Void, Never>?

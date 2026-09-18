@@ -9,6 +9,7 @@ final class SettingsStore {
 
     /// Bounds offered by the settings screen.
     static let slideDurationRange: ClosedRange<Double> = 5...60
+    static let cacheLimitRangeMB: ClosedRange<Double> = 128...4096
 
     var themeID: String {
         didSet { defaults.set(themeID, forKey: Key.themeID) }
@@ -27,6 +28,17 @@ final class SettingsStore {
         }
     }
 
+    /// Disk budget for downloaded photos, in megabytes.
+    var cacheLimitMB: Int {
+        didSet {
+            cacheLimitMB = min(max(cacheLimitMB, Int(Self.cacheLimitRangeMB.lowerBound)),
+                               Int(Self.cacheLimitRangeMB.upperBound))
+            defaults.set(cacheLimitMB, forKey: Key.cacheLimitMB)
+        }
+    }
+
+    var cacheLimitBytes: Int { cacheLimitMB * 1024 * 1024 }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -34,7 +46,9 @@ final class SettingsStore {
         themeID = defaults.string(forKey: Key.themeID) ?? Theme.default.id
         customQuery = defaults.string(forKey: Key.customQuery) ?? ""
         let storedDuration = defaults.object(forKey: Key.slideDuration) as? Double
-        slideDuration = storedDuration ?? SlideshowEngine.defaultSlideDuration
+        slideDuration = storedDuration ?? SlideshowDefaults.slideDuration
+        let storedLimit = defaults.object(forKey: Key.cacheLimitMB) as? Int
+        cacheLimitMB = storedLimit ?? ImageCache.defaultLimitBytes / (1024 * 1024)
     }
 
     /// Theme the slideshow should play.
@@ -50,5 +64,6 @@ final class SettingsStore {
         static let themeID = "theme.id"
         static let customQuery = "theme.customQuery"
         static let slideDuration = "slideshow.slideDuration"
+        static let cacheLimitMB = "cache.limitMB"
     }
 }
