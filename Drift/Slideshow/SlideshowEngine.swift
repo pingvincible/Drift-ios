@@ -53,11 +53,14 @@ final class SlideshowEngine {
     private func run() async {
         while !Task.isCancelled {
             // Either the frame that was fetched while the previous one was on
-            // screen, or — for the very first frame — a fresh fetch.
+            // screen, or — for the very first frame — a fresh fetch. Kept in
+            // `prefetch` while it runs so `stop()` can cancel it.
             let pending = prefetch ?? makePrefetch()
+            prefetch = pending
+            let content = await pending.value
             prefetch = nil
 
-            guard let content = await pending.value else {
+            guard let content else {
                 // Nothing anywhere yet. Back off instead of spinning.
                 guard await sleep(for: Self.emptyRetryDelay) else { return }
                 continue
