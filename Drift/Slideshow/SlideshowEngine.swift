@@ -8,12 +8,11 @@ import Observation
 final class SlideshowEngine {
     /// The frame currently on screen.
     private(set) var current: Slide?
-    /// Transition used for the swap that is running right now.
-    private(set) var transition: SlideTransition = .crossFade
 
     /// How long a single frame stays on screen, in seconds.
     var slideDuration: TimeInterval = SlideshowEngine.defaultSlideDuration
-    /// How long a swap takes, in seconds.
+    /// Base length of a swap, in seconds. Each transition scales it a little
+    /// and clamps the result to 1...2 s.
     var transitionDuration: TimeInterval = SlideshowEngine.defaultTransitionDuration
     /// Size of the screen in points; sources use it to pick a resolution.
     var targetSize: CGSize = .zero
@@ -24,6 +23,9 @@ final class SlideshowEngine {
     private let source: SlideSource
     private var loop: Task<Void, Never>?
     private var sequence = 0
+    /// Transition the next frame will enter with. Picked one swap ahead so the
+    /// leaving frame and the arriving one always use the same one.
+    private var upcomingTransition: SlideTransition = .random()
 
     init(source: SlideSource) {
         self.source = source
@@ -72,19 +74,25 @@ final class SlideshowEngine {
 
     private func show(_ content: SlideContent, animated: Bool) {
         sequence += 1
+        let enter = upcomingTransition
+        let exit = SlideTransition.random()
+        upcomingTransition = exit
+
         let slide = Slide(
             id: sequence,
             content: content,
             // The motion has to outlast the frame itself: the picture keeps
             // moving while it is fading out under the next one.
-            motion: .random(duration: slideDuration + transitionDuration * 2)
+            motion: .random(duration: slideDuration + SlideTransition.maximumDuration * 2),
+            enter: enter,
+            exit: exit
         )
 
         guard animated else {
             current = slide
             return
         }
-        withAnimation(transition.animation(duration: transitionDuration)) {
+        withAnimation(enter.animation(base: transitionDuration)) {
             current = slide
         }
     }

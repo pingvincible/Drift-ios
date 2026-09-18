@@ -11,7 +11,12 @@ struct SlideshowView: View {
                 if let slide = engine.current {
                     SlideView(slide: slide)
                         .id(slide.id)
-                        .transition(engine.transition.transition(duration: engine.transitionDuration))
+                        .transition(
+                            .asymmetric(
+                                insertion: slide.enter.insertion(base: engine.transitionDuration),
+                                removal: slide.exit.removal(base: engine.transitionDuration)
+                            )
+                        )
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)

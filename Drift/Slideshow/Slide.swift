@@ -7,7 +7,8 @@ struct SlideContent {
     let image: UIImage
 }
 
-/// One slide on screen: a picture plus the motion it is animated with.
+/// One slide on screen: a picture, the motion it is animated with, and the two
+/// transitions it enters and leaves with.
 ///
 /// `id` is a per-appearance sequence number, not the photo id — the same photo
 /// shown twice has to read as two different slides for SwiftUI transitions.
@@ -15,6 +16,8 @@ struct Slide: Identifiable {
     let id: Int
     let content: SlideContent
     let motion: KenBurnsMotion
+    let enter: SlideTransition
+    let exit: SlideTransition
 
     var contentID: String { content.contentID }
     var image: UIImage { content.image }
