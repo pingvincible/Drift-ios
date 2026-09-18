@@ -4,6 +4,7 @@ import UIKit
 ///
 /// Used before a theme is picked and as the last resort when there is neither
 /// network nor cache, so the screen is never empty.
+@MainActor
 final class BundledSlideSource: SlideSource {
     private let names: [String]
     private var upcoming: [String] = []
@@ -12,7 +13,7 @@ final class BundledSlideSource: SlideSource {
         self.names = names
     }
 
-    func nextContent(targetSize: CGSize) async -> SlideContent? {
+    func nextContent(target: SlideTarget) async -> SlideContent? {
         guard !names.isEmpty else { return nil }
         if upcoming.isEmpty {
             // Reshuffle, but never repeat the picture that is on screen right now.

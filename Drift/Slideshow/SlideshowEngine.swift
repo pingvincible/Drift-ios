@@ -14,8 +14,8 @@ final class SlideshowEngine {
     /// Base length of a swap, in seconds. Each transition scales it a little
     /// and clamps the result to 1...2 s.
     var transitionDuration: TimeInterval = SlideshowEngine.defaultTransitionDuration
-    /// Size of the screen in points; sources use it to pick a resolution.
-    var targetSize: CGSize = .zero
+    /// Where the frames are drawn; sources use it to pick a resolution.
+    var target: SlideTarget = .unknown
 
     static let defaultSlideDuration: TimeInterval = 18
     static let defaultTransitionDuration: TimeInterval = 1.5
@@ -48,7 +48,7 @@ final class SlideshowEngine {
     private func run() async {
         var isFirstFrame = true
         while !Task.isCancelled {
-            guard let content = await source.nextContent(targetSize: targetSize) else {
+            guard let content = await source.nextContent(target: target) else {
                 // Nothing to show yet. Back off instead of spinning.
                 guard await sleep(for: 2) else { return }
                 continue

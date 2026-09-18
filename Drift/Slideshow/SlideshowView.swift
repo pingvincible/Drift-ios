@@ -4,6 +4,8 @@ import SwiftUI
 struct SlideshowView: View {
     let engine: SlideshowEngine
 
+    @Environment(\.displayScale) private var displayScale
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
@@ -17,17 +19,23 @@ struct SlideshowView: View {
                                 removal: slide.exit.removal(base: engine.transitionDuration)
                             )
                         )
+
+                    if let attribution = slide.attribution {
+                        AttributionLabel(attribution: attribution)
+                            .id(slide.id)
+                            .transition(.opacity)
+                    }
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
             .onAppear {
-                engine.targetSize = geo.size
+                engine.target = SlideTarget(size: geo.size, scale: displayScale)
                 engine.start()
             }
             .onChange(of: geo.size) { _, size in
                 // Rotation only affects the resolution of the *next* frames;
                 // the running slideshow is left alone.
-                engine.targetSize = size
+                engine.target = SlideTarget(size: size, scale: displayScale)
             }
         }
         .ignoresSafeArea()
