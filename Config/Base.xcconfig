@@ -1,0 +1,7 @@
+// Shared project configuration.
+//
+// Secrets.xcconfig is optional: the leading "?" means the build does not fail
+// when the file is missing, UNSPLASH_ACCESS_KEY simply stays empty.
+#include? "Secrets.xcconfig"
+
+UNSPLASH_ACCESS_KEY = $(inherited)
